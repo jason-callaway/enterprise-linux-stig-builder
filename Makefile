@@ -16,8 +16,6 @@ default: rebuild
 
 # Make will use bash instead of sh
 SHELL := /usr/bin/env bash
-DATE  := $(shell date "+%Y-%m-%d-%H%M%S")
-IMAGE_NAME = rhel8-stig-${DATE}
 PROJECT_ID = el-stig-builder
 PROJECT_NUMBER = 917800312724
 ZONE = us-central1-c
@@ -28,21 +26,25 @@ BUCKET = el-stig-builder-artifacts
 # create packer builder
 #  This has to be done only once per project
 .PHONY: builder
-builder: 
+builder:
 	gcloud config set project ${PROJECT_ID}
 	gcloud builds submit --config=packer-cloud-builder/cloudbuild.yaml packer-cloud-builder/
 
 # generate-lockdown-script
 .PHONY: generate-lockdown-script
-generate-lockdown-script: 
+generate-lockdown-script:
+	$(eval DATE := $(shell date "+%Y-%m-%d-%H%M%S"))
+	$(eval IMAGE_NAME := rhel8-stig-${DATE})
 	gcloud config set project ${PROJECT_ID}
 	gcloud builds submit --config=generate-lockdown-script/cloudbuild.yaml \
 	  --substitutions=_IMAGE_NAME="${IMAGE_NAME}",_PROJECT_ID="${PROJECT_ID}",_ZONE="${ZONE}",_INSTANCE_NAME="lockdown-generate-${DATE}",_BUCKET="${BUCKET}",_PROJECT_NUMBER="${PROJECT_NUMBER}" \
 	  generate-lockdown-script/
+	@echo "${IMAGE_NAME}" > .last-image-name
 
 # build
 .PHONY: build
-build: 
+build:
+	$(eval IMAGE_NAME := $(shell cat .last-image-name))
 	gcloud config set project ${PROJECT_ID}
 	gcloud builds submit --config=build-image/cloudbuild.yaml \
 	  --substitutions=_IMAGE_NAME="${IMAGE_NAME}",_PROJECT_ID="${PROJECT_ID}",_ZONE="${ZONE}",_BUILDER_SA="${BUILDER_SA}",_BUCKET="${BUCKET}" \
@@ -50,7 +52,9 @@ build:
 
 # evaluate
 .PHONY: evaluate
-evaluate: 
+evaluate:
+	$(eval IMAGE_NAME := $(shell cat .last-image-name))
+	$(eval DATE := $(shell date "+%Y-%m-%d-%H%M%S"))
 	gcloud config set project ${PROJECT_ID}
 	gcloud builds submit --config=evaluate-image/cloudbuild.yaml \
 	  --substitutions=_IMAGE_NAME="${IMAGE_NAME}",_PROJECT_ID="${PROJECT_ID}",_ZONE="${ZONE}",_PROJECT_NUMBER="${PROJECT_NUMBER}",_INSTANCE_NAME="rhel-eval-${DATE}",_BUCKET="${BUCKET}" \
