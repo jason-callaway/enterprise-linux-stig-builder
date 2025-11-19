@@ -41,7 +41,37 @@ and uploads it to GCS in the configured bucket.
 
 ## Setup
 
-### Cloud Build Setup
+### Automated Setup (Recommended)
+
+Use the automated setup script to configure your GCP project with all required resources:
+
+```bash
+./setup-project.sh
+```
+
+The script will:
+- Enable required GCP APIs
+- Create the Packer service account with necessary IAM roles
+- Create KMS keyring and encryption key for CMEK compliance
+- Create GCS buckets for STIG artifacts and Cloud Build staging
+- Create Artifact Registry repository for container images
+- Configure all IAM bindings for Cloud Build
+
+You can also provide environment variables to run non-interactively:
+
+```bash
+export PROJECT_ID=your-project-id
+export ZONE=us-central1-c
+export BUCKET_NAME=your-stig-artifacts-bucket
+./setup-project.sh
+```
+
+### Manual Setup
+
+If you prefer to set up resources manually, follow these steps:
+
+<details>
+<summary>Click to expand manual setup instructions</summary>
 
 Create Service Account
 
@@ -97,6 +127,11 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
     --role=roles/iap.tunnelResourceAccessor \
     --member=serviceAccount:${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com
 ```
+
+**Note:** The manual setup above does not include KMS, GCS buckets, or Artifact Registry setup.
+See the `setup-project.sh` script for the complete configuration including CMEK compliance.
+
+</details>
 
 ## Internet Access
 

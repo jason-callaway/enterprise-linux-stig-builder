@@ -16,13 +16,13 @@ default: rebuild
 
 # Make will use bash instead of sh
 SHELL := /usr/bin/env bash
-DATE  != date "+%Y-%m-%d-%H%M%S"
+DATE  := $(shell date "+%Y-%m-%d-%H%M%S")
 IMAGE_NAME = rhel8-stig-${DATE}
-PROJECT_ID = example-project-id
-PROJECT_NUMBER = 123456789012
+PROJECT_ID = el-stig-builder
+PROJECT_NUMBER = 917800312724
 ZONE = us-central1-c
-BUILDER_SA = packer@example-project-id.iam.gserviceaccount.com
-BUCKET = my-stig-artifacts
+BUILDER_SA = packer@el-stig-builder.iam.gserviceaccount.com
+BUCKET = el-stig-builder-artifacts
 
 
 # create packer builder

@@ -33,13 +33,22 @@ fi
 
 
 # Execute the evaluation
+# Redirect stdout to a log file to prevent SSH session failure from verbose output
 sudo oscap xccdf eval --report poststig-disa-scan.html \
   $FETCH_REMOTE \
   --results poststig-disa-scan.xml \
   --profile stig \
-  /usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml
+  /usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml > oscap-scan.log 2>&1
+
+echo "OpenSCAP scan completed. Check oscap-scan.log for details."
 
 
-# Upload results
-sudo gsutil cp poststig-disa-scan.html "gs://${BUCKET}/${IMAGE_NAME}/"
-sudo gsutil cp poststig-disa-scan.xml "gs://${BUCKET}/${IMAGE_NAME}/"
+# Change ownership of files so packer user can upload them
+sudo chown packer:packer poststig-disa-scan.html poststig-disa-scan.xml oscap-scan.log
+
+# Upload results (without sudo to use the instance's service account which has storage access)
+gsutil cp poststig-disa-scan.html "gs://${BUCKET}/${IMAGE_NAME}/"
+gsutil cp poststig-disa-scan.xml "gs://${BUCKET}/${IMAGE_NAME}/"
+gsutil cp oscap-scan.log "gs://${BUCKET}/${IMAGE_NAME}/"
+
+echo "Uploaded compliance reports to gs://${BUCKET}/${IMAGE_NAME}/"
