@@ -317,6 +317,13 @@ gcloud storage buckets add-iam-policy-binding "gs://${BUCKET_NAME}" \
     --role=roles/storage.objectAdmin \
     --quiet
 
+# Grant Packer service account read access to STIG artifacts bucket
+print_info "Granting Packer service account read access to STIG artifacts bucket..."
+gcloud storage buckets add-iam-policy-binding "gs://${BUCKET_NAME}" \
+    --member="serviceAccount:packer@${PROJECT_ID}.iam.gserviceaccount.com" \
+    --role=roles/storage.objectViewer \
+    --quiet
+
 # Create Artifact Registry repository
 print_info "Creating Artifact Registry repository..."
 if gcloud artifacts repositories describe gcr.io --location=us >/dev/null 2>&1; then
